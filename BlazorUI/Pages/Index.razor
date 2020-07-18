@@ -1,0 +1,55 @@
+﻿@page "/"
+
+@using BlazorInputFile
+@using BlazorUI.Services
+
+@inject DocumentAPIClient Client
+
+<h1>Hello, world!</h1>
+
+Welcome to your new app.
+
+<h4>Files:</h4>
+
+@foreach (string name in FileNames)
+{
+    <p>
+        <a href="@($"https://blazorfilestorage.azurewebsites.net/api/GetDocument/{name}")" target="_blank">
+            @name <span class="oi oi-external-link" aria-hidden="true"></span>
+        </a>
+        <button class="btn btn-sm btn-danger" @onclick="@(async() => { await Client.DeleteFile(name); await Update(); })">
+            <span class="oi oi-trash" aria-hidden="true"></span>
+        </button>
+    </p>
+}
+
+<InputFile OnChange="HandleFileSelected" />
+
+@code {
+    private string[] FileNames { get; set; } = new string[0];
+
+    private async Task HandleFileSelected(IFileListEntry[] files)
+    {
+        try
+        {
+            await Client.PostDocumentAsync(files[0]);
+            await Update();
+        }
+        catch
+        {
+
+        }
+    }
+
+    private async Task Update()
+    {
+        FileNames = await Client.GetListOfDocumentNames();
+        this.StateHasChanged();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        FileNames = await Client.GetListOfDocumentNames();
+    }
+}
